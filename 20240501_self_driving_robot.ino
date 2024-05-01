@@ -52,6 +52,6 @@ void motor_r(int speed)
 
 void loop()
 {
-    motor_l(-30);
+    motor_l(-40);
     motor_r(40);
 }
