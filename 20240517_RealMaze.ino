@@ -2,11 +2,11 @@
 
 #include <NewPing.h>
 
-#define SONAR_NUM 3      // Number of sensors.
+#define SONAR_NUM 3      // 소나 센서 개수
 #define MAX_DISTANCE 150 // Maximum distance (in cm) to ping.
 #define WALL_GAP_DISTANCE      350//mm 단위
 #define WALL_GAP_DISTANCE_HALF 200 //mm 단위
-#define MOTOR_PWM_OFFSET 10
+#define MOTOR_PWM_OFFSET 10   //모터간 속도 차이 10
 
 
 #define Front 0
@@ -42,7 +42,7 @@ NewPing(TRIG3, ECHO3, MAX_DISTANCE)
  float right_sonar = 0.0;
 
 /////////////////////Maze_Status//////////////////////////
-int maze_status = 0; 
+int maze_status = 0;    //maze 기본상태 0
 
 
 void setup() 
@@ -87,7 +87,7 @@ void motor_A_control(int direction_a, int motor_speed_a) //모터 A의 방향(di
 }
 void motor_B_control(int direction_b, int motor_speed_b) //모터 A의 방향(direction)과 속도(speed) 제어
 {
-  if(direction_b == HIGH)
+  if(direction_b == HIGH)    
   {
      digitalWrite(IN3, HIGH); //모터의 방향 제어
      digitalWrite(IN4, LOW);
@@ -112,22 +112,22 @@ void check_maze_status(void)
     maze_status = 4;
     Serial.println("maze_status = 4");
   }
-  else if( (left_sonar>=0) && (left_sonar<=WALL_GAP_DISTANCE) && (right_sonar>=0) && (right_sonar<=WALL_GAP_DISTANCE) && (front_sonar>=WALL_GAP_DISTANCE_HALF)  )
+  else if( (left_sonar>=0) && (left_sonar<=WALL_GAP_DISTANCE) && (right_sonar>=0) && (right_sonar<=WALL_GAP_DISTANCE) && (front_sonar>=WALL_GAP_DISTANCE_HALF)  )     // 좌우 면이 막힌 경우
   {
     maze_status = 1;
     Serial.println("maze_status = 1");
   }
-  else if((left_sonar>=0) && (left_sonar<=WALL_GAP_DISTANCE) && (front_sonar>=0) && (front_sonar<=WALL_GAP_DISTANCE_HALF))
+  else if((left_sonar>=0) && (left_sonar<=WALL_GAP_DISTANCE) && (front_sonar>=0) && (front_sonar<=WALL_GAP_DISTANCE_HALF))    //왼쪽과 앞면이 막힌 경우
   {
     maze_status = 2;
     Serial.println("maze_status = 2");
   }
-  else if((right_sonar>=0) && (right_sonar<=WALL_GAP_DISTANCE) && (front_sonar>=0) && (front_sonar<=WALL_GAP_DISTANCE_HALF))
+  else if((right_sonar>=0) && (right_sonar<=WALL_GAP_DISTANCE) && (front_sonar>=0) && (front_sonar<=WALL_GAP_DISTANCE_HALF))    // 오른쪽과 앞면이 막힌 경우
   {
     maze_status = 3;
     Serial.println("maze_status = 3");
   }
-  else
+  else      // 지금까지의 경우들을 제외한 나머지의 경우
   {
     maze_status = 0;
     Serial.println("maze_status = 0"); 
@@ -141,21 +141,22 @@ void wall_collision_avoid(int base_spped)
   int pwm_control = 0;
   int right_pwm = 0;
   int left_pwm  = 0;
-  error = (right_sonar - left_sonar);
-  error = Kp * error;  
-  
-  if(error >= 50) error = 50;
-  if(error <= -50) error = -50; 
+  error = (right_sonar - left_sonar);   //오른쪽 소나 측정값과 왼쪽소나 측정값을 뺀 값을 error 변수에 지정해준다.
+  error = Kp * error;     // error 값에 kp를 곱하여 오차값을 소폭 증가시켜준다.(회전값 증가)
+
+  //모터 최고속도가 255이므로 255를 초과하지 않기위해 error값 조정
+  if(error >= 50) error = 50;     //error값이 50이상이라면 50으로 조정
+  if(error <= -50) error = -50;     //error값이 -50이하라면 -50으로 조정
                        
 
-  right_pwm = base_spped - error;
-  left_pwm  = base_spped + error;
+  right_pwm = base_spped - error;     // right_pwm 변수에 기본 전진속도 오른쪽모터에서 error 를 빼준다.
+  left_pwm  = base_spped + error;     // left_pwm 변수에 기본 전진 왼쪽 모터속도에서 error를 더해준다.
   
-  if(right_pwm <= 0) right_pwm = 0;
-  if(left_pwm  <= 0) left_pwm  = 0;
+  if(right_pwm <= 0) right_pwm = 0;   //right_pwm 값이 0이하가 되어버렸다면 0으로 맞춘다.
+  if(left_pwm  <= 0) left_pwm  = 0;   //left_pwm 값이 0이하가 되어버렸다면 0으로 맞춘다.ㅏ
 
-  if(right_pwm >= 247) right_pwm = 247;
-  if(left_pwm  >= 250) left_pwm  = 250;
+  if(right_pwm >= 247) right_pwm = 247;   //right_pwm 값이 직진 최고속도값인 247이상이 되어버렸다면 최댓값으로 맞춘다.
+  if(left_pwm  >= 250) left_pwm  = 250;   //left_pwm 값이 직진 최고속도값인 250이상이 되어버렸다면 최댓값으로 맞춘다.
   
   motor_A_control(HIGH,left_pwm); //오른쪽 전진
   motor_B_control(HIGH,right_pwm); // 왼쪽 전진
